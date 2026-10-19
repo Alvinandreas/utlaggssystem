@@ -120,7 +120,7 @@ den nya personen väljer nytt lösenord.
 3. Inloggningen förutsätter att mailutskicket fungerar (avsnitt 3). Om det inte gör det, t.ex.
    vid första driftsättningen, kan en länk för att välja lösenord skapas på servern:
    `npm run auth:link -- ekonomi@mtek.chalmers.se`
-   (i Docker: `docker exec -it utlagg npm run auth:link -- ekonomi@mtek.chalmers.se`).
+   (i Docker: `docker exec -u utlagg utlagg npm run auth:link -- ekonomi@mtek.chalmers.se`).
 
 ### Google-projektet
 

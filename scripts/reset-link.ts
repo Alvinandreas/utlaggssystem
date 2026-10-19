@@ -3,7 +3,7 @@
  * mailutskicket inte fungerar, t.ex. vid första driftsättningen.
  *
  * Kör på servern: npm run auth:link -- ekonomi@mtek.chalmers.se
- * (i Docker: docker exec -it utlagg npm run auth:link -- ekonomi@mtek.chalmers.se)
+ * (i Docker: docker exec -u utlagg utlagg npm run auth:link -- ekonomi@mtek.chalmers.se)
  *
  * Kontot skapas om det inte finns. Länken gäller i 24 timmar.
  */
