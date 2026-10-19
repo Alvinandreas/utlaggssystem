@@ -339,3 +339,83 @@ export async function mailReminder(to: string, items: ReminderItem[]): Promise<v
       `\n\nÖppna kassörsvyn: ${appUrl("/admin")}\n\nDu får en ny påminnelse om en vecka om utläggen fortfarande väntar.`,
   });
 }
+
+// ---------- Konto och inloggning ----------
+
+const signature = ["", "", "Hälsningar,", "Utläggsboten, Maskinteknologsektionen"].join("\n");
+
+/** Länk för att bekräfta adressen och aktivera ett nytt konto. */
+export async function mailVerify(to: string, url: string): Promise<void> {
+  await sendMail({
+    to,
+    subject: "Bekräfta din e-postadress",
+    text:
+      [
+        "Hej!",
+        "",
+        "Någon, förhoppningsvis du, har skapat ett konto i sektionens utläggssystem med den här adressen.",
+        "Öppna länken för att bekräfta adressen och aktivera kontot:",
+        "",
+        url,
+        "",
+        "Länken gäller i ett dygn. Har du inte skapat något konto kan du bortse från det här mailet.",
+      ].join("\n") + signature,
+  });
+}
+
+/** Skickas i stället för en bekräftelselänk när adressen redan har ett konto. */
+export async function mailAlreadyRegistered(to: string): Promise<void> {
+  await sendMail({
+    to,
+    subject: "Du har redan ett konto",
+    text:
+      [
+        "Hej!",
+        "",
+        "Någon försökte skapa ett konto i sektionens utläggssystem med den här adressen, men det finns redan ett.",
+        "",
+        `Logga in: ${appUrl("/login")}`,
+        `Glömt lösenordet? ${appUrl("/login/glomt-losenord")}`,
+        "",
+        "Var det inte du kan du bortse från det här mailet.",
+      ].join("\n") + signature,
+  });
+}
+
+/** Länk för att välja nytt lösenord. */
+export async function mailReset(to: string, url: string): Promise<void> {
+  await sendMail({
+    to,
+    subject: "Välj ett nytt lösenord",
+    text:
+      [
+        "Hej!",
+        "",
+        "Någon, förhoppningsvis du, har bett om att få byta lösenord till utläggssystemet för den här adressen.",
+        "Öppna länken för att välja ett nytt lösenord:",
+        "",
+        url,
+        "",
+        "Länken gäller i en timme. När lösenordet är bytt loggas alla andra inloggningar på kontot ut.",
+        "Har du inte bett om det här kan du bortse från mailet. Lösenordet ändras inte förrän länken används.",
+      ].join("\n") + signature,
+  });
+}
+
+/** Svar på "Glömt lösenord" för en adress som saknar konto. */
+export async function mailNoAccount(to: string): Promise<void> {
+  await sendMail({
+    to,
+    subject: "Det finns inget konto med den här adressen",
+    text:
+      [
+        "Hej!",
+        "",
+        "Någon bad om att få byta lösenord till sektionens utläggssystem för den här adressen, men det finns inget konto med den.",
+        "",
+        `Skapa ett konto: ${appUrl("/login/skapa-konto")}`,
+        "",
+        "Var det inte du kan du bortse från det här mailet.",
+      ].join("\n") + signature,
+  });
+}

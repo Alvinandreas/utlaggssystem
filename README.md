@@ -7,7 +7,8 @@ betalar ut. Ersätter PDF-blanketten och mailen till utlagg@mtek.chalmers.se.
 
 **För utläggaren**
 
-- Loggar in med Google-konto.
+- Skapar konto med sin föreningsadress och ett lösenord, bekräftar adressen via mail och loggar
+  in. Med *Håll mig inloggad* gäller inloggningen i ett år.
 - Väljer vilken kommitté eller förening utlägget gäller och fyller i samma uppgifter som på
   utläggsblanketten, i fyra steg med hjälptexter och validering (datum som ÅÅÅÅ-MM-DD,
   clearingnummer som slås upp mot bank, kontonummer bara siffror osv).
@@ -57,7 +58,7 @@ betalar ut. Ersätter PDF-blanketten och mailen till utlagg@mtek.chalmers.se.
 
 - [Next.js 16](https://nextjs.org) (App Router, React 19, TypeScript)
 - [Prisma](https://prisma.io) med SQLite (kan bytas till Postgres, se nedan)
-- [Auth.js](https://authjs.dev) med Google-inloggning
+- Egen inloggning med e-post och lösenord (scrypt), sessioner i databasen
 - [pdf-lib](https://pdf-lib.js.org) för PDF, [sharp](https://sharp.pixelplumbing.com) och
   heic-convert för bilder, [signature_pad](https://github.com/szimek/signature_pad) för signaturer
 - googleapis för Drive och för mailutskick via Googles mail-API, nodemailer för att
@@ -78,7 +79,6 @@ Fyll i `.env`:
 
 ```bash
 # Generera hemligheter
-openssl rand -base64 32   # -> AUTH_SECRET
 openssl rand -hex 32      # -> ENCRYPTION_KEY
 ```
 
@@ -89,9 +89,10 @@ npx prisma migrate deploy
 npm run dev
 ```
 
-Öppna http://localhost:3000. Utan Google-nycklar i `.env` visas en **utvecklarinloggning** där
-du loggar in med valfri e-postadress. Logga in med adressen i `ADMIN_EMAILS` för att komma åt
-kassörsvyn. Mail skickas inte utan SMTP, utan sparas som filer i `data/outbox/`. Kommittélistan
+Öppna http://localhost:3000 och skapa ett konto. Utan mailkoppling sparas mailen som filer i
+`data/outbox/`, och länkarna för att bekräfta adressen och byta lösenord skrivs dessutom ut i
+terminalen. Skapa kontot med adressen i `ADMIN_EMAILS` för att komma åt kassörsvyn, eller hämta en
+länk direkt med `npm run auth:link -- ekonomi@mtek.chalmers.se`. Mail skickas inte utan SMTP, utan sparas som filer i `data/outbox/`. Kommittélistan
 fylls automatiskt med standardlistan från `src/lib/config.ts` första gången formuläret öppnas.
 
 Testdata: `npx tsx scripts/seed-test.ts` skapar ett inskickat utlägg med två kvitton.
@@ -100,19 +101,38 @@ jobben.
 
 ## Konfiguration steg för steg
 
-### 1. Google-inloggning (obligatoriskt i produktion)
+### 1. Inloggning och behörighet
+
+Alla loggar in med e-post och lösenord. Kontot aktiveras först när adressen bekräftats via en
+länk i mail, och "Glömt lösenord" skickar en länk för att välja nytt. När lösenordet byts loggas
+alla andra inloggningar på kontot ut, så när en föreningsadress byter innehavare räcker det att
+den nya personen väljer nytt lösenord.
+
+1. Sätt `AUTH_URL` till appens fulla adress, t.ex. `https://utlagg.mtek.chalmers.se`. Den används
+   i länkarna i mailen och avgör om inloggningskakan kräver HTTPS.
+2. Ange vilka som får skapa konto. Det går att göra på två ställen, och båda gäller:
+   - `ALLOWED_EMAIL_DOMAINS` i `.env`, t.ex. `mtek.chalmers.se`.
+   - *Kassör → Inställningar → Vem får skapa konto*: domäner (t.ex. `marm.se`) och enskilda
+     adresser, utan omstart.
+
+   Sektionskassörerna i `ADMIN_EMAILS` och kommittékassörerna under *Kommittéer* släpps alltid
+   in. Är båda listorna tomma släpps alla in. Tas en domän bort loggas de som använder den ut.
+3. Inloggningen förutsätter att mailutskicket fungerar (avsnitt 3). Om det inte gör det, t.ex.
+   vid första driftsättningen, kan en länk för att välja lösenord skapas på servern:
+   `npm run auth:link -- ekonomi@mtek.chalmers.se`
+   (i Docker: `docker exec -it utlagg npm run auth:link -- ekonomi@mtek.chalmers.se`).
+
+### Google-projektet
+
+Drive och mailutskicken använder en OAuth-klient i Google Cloud. Den behövs inte för inloggningen.
 
 1. Gå till [Google Cloud Console](https://console.cloud.google.com/), skapa ett projekt
    (t.ex. "Utläggssystem") inloggad som ekonomi@mtek.chalmers.se.
-2. *APIs & Services → OAuth consent screen*: välj **External**, fyll i appnamn och kontaktmail.
-   Publicera appen (annars fungerar bara testanvändare).
-3. *APIs & Services → Credentials → Create credentials → OAuth client ID*, typ **Web application**.
-   - Authorized JavaScript origins: `https://utlagg.mtek.chalmers.se` (och `http://localhost:3000`)
-   - Authorized redirect URIs: `https://utlagg.mtek.chalmers.se/api/auth/callback/google`
-     (och `http://localhost:3000/api/auth/callback/google`, samt
-     `http://localhost:3456/oauth2callback` för Drive-skriptet nedan)
+2. *Google Auth Platform → Audience*: låt projektet vara **Internal**. Då behövs ingen
+   verifiering och nycklarna slutar inte gälla efter en vecka.
+3. *Clients → Create client*, typ **Web application**, med redirect-URI
+   `http://localhost:3456/oauth2callback` (för skripten nedan).
 4. Lägg in Client ID och Client secret som `AUTH_GOOGLE_ID` och `AUTH_GOOGLE_SECRET`.
-5. Sätt `AUTH_URL` till appens fulla adress.
 
 ### 2. Google Drive
 
@@ -165,7 +185,7 @@ komplett förrän utbetalningsdatumet står i den.
 
 Logga in som sektionskassör, gå till *Kassör → Kommittéer*. Justera namn och ordning, och ange
 kassörens namn och e-post för de kommittéer som ska sköta sina utlägg själva. Kommittékassören
-loggar sedan in med samma e-post (Google-konto) och lägger in sin signatur under *Inställningar*.
+skapar sedan konto med samma adress och lägger in sin signatur under *Inställningar*.
 
 ### 5. Kassörens signatur
 

@@ -1,6 +1,8 @@
 import "server-only";
+import { cache } from "react";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { currentSessionUser } from "@/lib/session";
+import { emailAllowed } from "@/lib/access";
 import { isAdminEmail } from "@/lib/config";
 import { prisma } from "@/lib/prisma";
 
@@ -17,12 +19,13 @@ export type SessionUser = {
   isTreasurer: boolean;
 };
 
-/** Inloggad användare, eller null. */
-export async function getSessionUser(): Promise<SessionUser | null> {
-  const session = await auth();
-  const u = session?.user;
-  if (!u?.id || !u.email) return null;
+/** Inloggad användare, eller null. Cachas per förfrågan. */
+export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
+  const u = await currentSessionUser();
+  if (!u) return null;
   const email = u.email.toLowerCase();
+  // Tas en domän eller adress bort ur listan över tillåtna gäller det även den som redan är inloggad.
+  if (!(await emailAllowed(email))) return null;
   const isAdmin = isAdminEmail(email);
   const committees = await prisma.committee.findMany({
     where: { treasurerEmail: email, active: true },
@@ -38,7 +41,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     treasurerOf,
     isTreasurer: isAdmin || treasurerOf.length > 0,
   };
-}
+});
 
 /** Kräver inloggning, annars skickas användaren till inloggningssidan. */
 export async function requireUser(): Promise<SessionUser> {

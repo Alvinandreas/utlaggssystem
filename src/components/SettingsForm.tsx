@@ -100,6 +100,16 @@ export function SettingsForm({ email, initialName, initialSignature, isAdmin, dr
           </div>
 
           <div className="card">
+            <h2>Vem får skapa konto</h2>
+            <p className="muted">
+              Domäner och enskilda adresser som får skapa konto och göra utlägg, t.ex. marm.se för MARM.
+            </p>
+            <Link href="/admin/behorighet" className="btn">
+              Hantera behörighet
+            </Link>
+          </div>
+
+          <div className="card">
             <h2>Kopplingar och automatik</h2>
             {toolResult && (
               <div className={`alert ${toolResult.ok ? "success" : "error"}`}>

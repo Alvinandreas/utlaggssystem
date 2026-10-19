@@ -11,15 +11,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ---------- Auth.js-tabeller (Google-inloggning) ----------
+// ---------- Konton och inloggning ----------
 
+// Konton skapas med e-post och lösenord. Lösenordet sätts först när adressen
+// bekräftats via mail (eller vid återställning), så ett konto med passwordHash
+// har alltid en bekräftad adress.
 model User {
   id            String    @id @default(cuid())
   name          String?
   email         String    @unique
   emailVerified DateTime?
+  passwordHash  String? // scrypt, se src/lib/password.ts
   image         String?
-  accounts      Account[]
   sessions      Session[]
 
   // Sparade uppgifter som förifylls nästa gång användaren gör ett utlägg
@@ -36,38 +39,41 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-}
-
+// Inloggade webbläsare. sessionToken är en SHA-256 av kakans värde, så en kopia
+// av databasen räcker inte för att logga in.
 model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
   userId       String
   expires      DateTime
+  remember     Boolean  @default(false) // "Håll mig inloggad"
+  createdAt    DateTime @default(now())
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
+// Engångslänkar i mail. type: VERIFY (bekräfta adress) | RESET (nytt lösenord).
+// Vid VERIFY ligger det valda lösenordets hash i passwordHash tills länken används.
+model AuthToken {
+  id           String   @id @default(cuid())
+  tokenHash    String   @unique
+  type         String
+  email        String
+  passwordHash String?
+  expires      DateTime
+  createdAt    DateTime @default(now())
 
-  @@unique([identifier, token])
+  @@index([email, type])
+}
+
+// Adresser och domäner som får skapa konto, utöver ALLOWED_EMAIL_DOMAINS i .env.
+// value är antingen en hel adress (namn@marm.se) eller en domän (marm.se).
+model AllowedEmail {
+  id        String   @id @default(cuid())
+  value     String   @unique
+  note      String?
+  createdAt DateTime @default(now())
 }
 
 // ---------- Utlägg ----------

@@ -12,6 +12,7 @@ import { driveConfigured, uploadPdf, checkFolder } from "@/lib/drive";
 import { driveFolderFor, importDefaultCommittees, responsibleEmail } from "@/lib/committees";
 import { mailComplementRequested, mailPaid, mailRejected, sendMail, adminMail, type Contact } from "@/lib/email";
 import { runDailyJobs } from "@/lib/jobs";
+import { normalizeEntry, validEntry } from "@/lib/access";
 import type { ExpenseWithAll } from "@/components/ExpenseDetails";
 
 export type AdminResult = { ok: boolean; message: string; warnings?: string[] };
@@ -259,6 +260,26 @@ export async function deleteCommittee(formData: FormData): Promise<void> {
   await prisma.committee.delete({ where: { id } });
   revalidatePath("/admin/kommitteer");
   redirect("/admin/kommitteer?borttagen=1");
+}
+
+// ---------- Vem får skapa konto ----------
+
+/** Lägger till en adress eller domän som får skapa konto (/admin/behorighet). */
+export async function addAllowedEmail(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const value = normalizeEntry(str(formData, "value"));
+  if (!validEntry(value)) redirect("/admin/behorighet?fel=format");
+  const note = str(formData, "note") || null;
+  await prisma.allowedEmail.upsert({ where: { value }, update: { note }, create: { value, note } });
+  revalidatePath("/admin/behorighet");
+  redirect("/admin/behorighet?sparat=1");
+}
+
+export async function removeAllowedEmail(formData: FormData): Promise<void> {
+  await requireAdmin();
+  await prisma.allowedEmail.deleteMany({ where: { id: str(formData, "id") } });
+  revalidatePath("/admin/behorighet");
+  redirect("/admin/behorighet?borttagen=1");
 }
 
 // ---------- Verktyg ----------

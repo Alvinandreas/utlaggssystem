@@ -1065,23 +1065,12 @@ main.container.narrow {
   letter-spacing: 0.04em;
 }
 
-.google-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.7rem;
-  padding: 0.7rem 1.4rem;
-  border-radius: var(--pill);
-  border: 1px solid var(--gray-300);
-  background: #fff;
-  color: var(--text);
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-  width: 100%;
-  justify-content: center;
-}
-.google-btn:hover {
-  background: var(--gray-50);
+.auth-links {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 1rem 0 0;
 }
 
 .sr-only {
@@ -1090,4 +1079,17 @@ main.container.narrow {
   height: 1px;
   overflow: hidden;
   clip: rect(0 0 0 0);
+}
+
+.plain-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.plain-list li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--gray-200);
+}
+.plain-list li:last-child {
+  border-bottom: 0;
 }

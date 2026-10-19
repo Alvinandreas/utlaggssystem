@@ -40,7 +40,7 @@ export default async function Home() {
         <div className="step">
           <div className="num">1</div>
           <h3>Logga in</h3>
-          <p>Använd ditt Google-konto. Dina kontouppgifter sparas så att nästa utlägg går snabbare.</p>
+          <p>Skapa ett konto med din föreningsadress. Dina kontouppgifter sparas så att nästa utlägg går snabbare.</p>
         </div>
         <div className="step">
           <div className="num">2</div>

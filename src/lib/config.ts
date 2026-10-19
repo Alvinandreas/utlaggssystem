@@ -26,6 +26,10 @@ export const OTHER_COMMITTEE = "__annan__";
 /** Prefix på Expense.committee när utläggaren valt "Annan". */
 export const OTHER_PREFIX = "Annan: ";
 
+/** Längdkrav på lösenord. */
+export const PASSWORD_MIN = 8;
+export const PASSWORD_MAX = 200;
+
 /** Antal dagar ett utlägg får ligga obehandlat/obetalt innan kassören påminns (och sedan igen lika ofta). */
 export function reminderDays(): number {
   return Number(process.env.REMINDER_DAYS || 7);

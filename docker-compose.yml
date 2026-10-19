@@ -14,10 +14,13 @@
 #     verksamhetsår. Börja med 5 GB.
 #   * Minne: cirka 400 MB i drift, 1 GB tilldelat räcker väl.
 #   * Utgående HTTPS (port 443) till googleapis.com och accounts.google.com
-#     krävs för inloggning, arkivering i Drive och mailutskick.
+#     krävs för arkivering i Drive och mailutskick, även länkarna som
+#     bekräftar nya konton och återställer lösenord.
 #   * Ingen utgående SMTP behövs.
 #   * Tjänsten lyssnar på port 3000 och ska nås via HTTPS utifrån. Terminera
 #     TLS i er reverse proxy och skicka vidare till containern.
+#     Proxyn måste skicka med Host (eller X-Forwarded-Host), X-Forwarded-Proto
+#     och X-Forwarded-For/X-Real-IP. Utan Host avvisar Next.js alla formulär.
 
 services:
   utlagg:

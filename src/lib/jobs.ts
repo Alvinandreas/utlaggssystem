@@ -118,11 +118,19 @@ export async function deleteStaleDrafts(): Promise<number> {
   return drafts.length;
 }
 
+/** Tar bort utgångna inloggningar och engångslänkar. */
+export async function deleteExpiredLogins(): Promise<void> {
+  const now = new Date();
+  await prisma.session.deleteMany({ where: { expires: { lt: now } } });
+  await prisma.authToken.deleteMany({ where: { expires: { lt: now } } });
+}
+
 /** Kör alla dagliga jobb och antecknar tidpunkten. */
 export async function runDailyJobs(): Promise<JobReport> {
   const remindersSent = await sendReminders();
   const accountsCleared = await clearOldAccountNumbers();
   const draftsDeleted = await deleteStaleDrafts();
+  await deleteExpiredLogins();
   const ranAt = new Date();
   await prisma.settings.upsert({
     where: { id: "default" },

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getSessionUser } from "@/lib/dal";
-import { signOut } from "@/auth";
+import { logoutAction } from "@/app/login/actions";
 
 export async function SiteHeader() {
   const user = await getSessionUser();
@@ -24,17 +24,7 @@ export async function SiteHeader() {
           )}
         </nav>
         {user && (
-          <form
-            className="user"
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/" });
-            }}
-          >
-            {user.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.image} alt="" referrerPolicy="no-referrer" />
-            ) : null}
+          <form className="user" action={logoutAction}>
             <span className="small name">{user.name}</span>
             <button className="btn small ghost" type="submit">
               Logga ut
