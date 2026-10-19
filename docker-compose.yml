@@ -24,7 +24,7 @@
 
 services:
   utlagg:
-    image: ghcr.io/ekonomi-cloud/utlaggssystem:latest
+    image: ghcr.io/alvinandreas/utlaggssystem:latest
     container_name: utlagg
     restart: unless-stopped
 

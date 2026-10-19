@@ -211,7 +211,7 @@ Ett GitHub-flöde (`.github/workflows/docker.yml`) bygger bilden vid varje push 
 publicerar den i GitHub Container Registry:
 
 ```
-ghcr.io/ekonomi-cloud/utlaggssystem:latest
+ghcr.io/alvinandreas/utlaggssystem:latest
 ```
 
 `docker-compose.yml` är skriven för att klistras in som en stack i Portainer. Den beskriver
